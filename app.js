@@ -1,6 +1,6 @@
 const codes={0:['Clear sky','☀️'],1:['Mainly clear','🌤️'],2:['Partly cloudy','⛅'],3:['Overcast','☁️'],45:['Fog','🌫️'],48:['Rime fog','🌫️'],51:['Light drizzle','🌦️'],53:['Drizzle','🌦️'],55:['Dense drizzle','🌧️'],61:['Light rain','🌧️'],63:['Rain','🌧️'],65:['Heavy rain','🌧️'],71:['Light snow','🌨️'],73:['Snow','🌨️'],75:['Heavy snow','❄️'],80:['Rain showers','🌦️'],81:['Moderate rain showers','🌧️'],82:['Heavy rain showers','⛈️'],95:['Thunderstorm','⛈️'],96:['Thunderstorm with hail','⛈️'],99:['Thunderstorm with hail','⛈️']};
 const $=s=>document.querySelector(s), fmt=n=>new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(n);
-const viewDetails={overview:['Daily Dashboard','Personal Overview'],markets:['Markets','Market Overview'],tools:['Developer Tools','Utilities'],reference:['Number Names','Reference']};
+const viewDetails={overview:['Daily Dashboard','Personal Overview'],markets:['Markets','Market Overview'],tools:['Tools & Converters','Utilities'],reference:['Number Names','Reference']};
 function showView(name){
   const details=viewDetails[name];
   if(!details) return;
@@ -61,3 +61,24 @@ $('#ticker-form').addEventListener('submit',event=>{event.preventDefault(); cons
 $('#cancel-tickers').addEventListener('click',()=>$('#ticker-dialog').close());
 $('#hide-stocks').addEventListener('click',()=>setStocksVisible(false)); $('#show-stocks').addEventListener('click',()=>setStocksVisible(true)); if(localStorage.getItem(stocksVisibleKey)==='false') setStocksVisible(false);
 renderStocks(); setInterval(refreshWatchlist,60000);
+
+// Fuel consumption and distance per litre are reciprocal measures.
+const fuelFormat=new Intl.NumberFormat('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function updateFuel(){
+  const input=$('#fuel-input'), raw=input.value.trim(), value=Number(raw), distance=100/value;
+  const valid=raw!==''&&Number.isFinite(value)&&value>0&&Number.isFinite(distance), note=$('#fuel-note');
+  $('#fuel-result').textContent=valid?fuelFormat.format(distance):'—';
+  input.setAttribute('aria-invalid',String(!valid));
+  note.textContent=valid?'계산식: km/L = 100 ÷ (L/100km) · 소수점 둘째 자리까지 표시':'0보다 큰 연료 사용량을 입력해 주세요.';
+  note.classList.toggle('error',!valid);
+  const values=[3,4,5,6,7,8,9,10,12,15,20];
+  if(valid&&!values.includes(value)) values.push(value);
+  $('#fuel-table-body').replaceChildren(...values.sort((a,b)=>a-b).map(consumption=>{
+    const row=document.createElement('tr'), amount=document.createElement('td'), economy=document.createElement('td');
+    amount.textContent=String(consumption); economy.textContent=fuelFormat.format(100/consumption);
+    if(valid&&consumption===value){row.className='is-current'; amount.append(' (입력값)');}
+    row.append(amount,economy); return row;
+  }));
+}
+$('#fuel-input').addEventListener('input',updateFuel);
+updateFuel();
